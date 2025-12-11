@@ -7,7 +7,6 @@ def calculate_distance(lat1: float, lon1: float, lat2: float, lon2: float) -> fl
     """
     Calculate the Haversine distance in kilometers between two points on Earth.
     """
-
     earthRadius = 6371
 
     # Convert degrees to radians for trig functions
@@ -16,9 +15,6 @@ def calculate_distance(lat1: float, lon1: float, lat2: float, lon2: float) -> fl
     lat_delta = lat2 - lat1
     lon_delta = lon2 - lon1
 
-    # Haversine distance ()
-    # a = sin²(Δlat/2) + cos(lat1) × cos(lat2) × sin²(Δlon/2)
-    # distance = 2 × R × arcsin(√a)
     a = math.sin(lat_delta / 2) ** 2 + math.cos(lat1) * math.cos(lat2) * math.sin(lon_delta / 2) ** 2
     return earthRadius * 2 * math.asin(math.sqrt(a))
 
@@ -34,12 +30,6 @@ def distance_to_latency(distance_km: float) -> float:
 def load_graphml(filepath: str) -> Network:
     """
     Load a GraphML topology file and return a Network object.
-
-    Args:
-        filepath: Path to the .graphml file
-
-    Returns:
-        Network object with routers and links populated
     """
     tree = ET.parse(filepath)
     root = tree.getroot()
@@ -47,12 +37,13 @@ def load_graphml(filepath: str) -> Network:
     # Handle XML namespace
     ns = {'g': 'http://graphml.graphdrawing.org/xmlns'}
 
-    # Parse key definitions to find attribute IDs
+    # Parse key definitions to find attribute IDs (only for nodes)
     keys = {}
     for key in root.findall('g:key', ns):
-        attr_name = key.get('attr.name')
-        key_id = key.get('id')
-        keys[attr_name] = key_id
+        if key.get('for') == 'node':  # Only get node attributes
+            attr_name = key.get('attr.name')
+            key_id = key.get('id')
+            keys[key_id] = attr_name  # Changed: key_id -> attr_name
 
     # Get the graph element
     graph = root.find('g:graph', ns)
@@ -65,33 +56,39 @@ def load_graphml(filepath: str) -> Network:
 
         for data in node.findall('g:data', ns):
             key_id = data.get('key')
-            # Match key_id to attribute name
-            for attr_name, k_id in keys.items():
-                if k_id == key_id:
-                    node_data[attr_name] = data.text
-                    break
+            if key_id in keys:
+                attr_name = keys[key_id]
+                node_data[attr_name] = data.text
 
         nodes[node_id] = node_data
 
-    # Create Network and add routers
+    # Create Network and add routers with full info
     net = Network()
     for node_id, data in nodes.items():
-        label = data.get('label', node_id)
-        net.add_router(label)
-        # Store coordinates for latency calculation
-        nodes[node_id]['_label'] = label
+        # Try both 'label' and 'Label' since GraphML can vary
+        label = data.get('label') or data.get('Label') or node_id
+
+        # Parse coordinates
+        try:
+            lat = float(data.get('Latitude', 0))
+            lon = float(data.get('Longitude', 0))
+        except (ValueError, TypeError):
+            lat, lon = None, None
+
+        net.add_router(
+            router_id=node_id,
+            label=label,
+            latitude=lat,
+            longitude=lon
+        )
 
     # Parse edges and add links with latency as cost
     for edge in graph.findall('g:edge', ns):
-        source_id = edge.get('source')
-        target_id = edge.get('target')
+        src_id = edge.get('source')
+        tgt_id = edge.get('target')
 
-        src = nodes[source_id]
-        tgt = nodes[target_id]
-
-        # Get labels (router names)
-        src_label = src.get('_label', source_id)
-        tgt_label = tgt.get('_label', target_id)
+        src = nodes[src_id]
+        tgt = nodes[tgt_id]
 
         # Calculate latency from coordinates
         try:
@@ -105,43 +102,20 @@ def load_graphml(filepath: str) -> Network:
         except (ValueError, TypeError):
             latency = 10.0  # Default latency if coords missing
 
-        # Add link (avoid duplicates for undirected graph)
-        net.add_link(src_label, tgt_label, latency)
+        net.add_link(src_id, tgt_id, latency)
 
     return net
 
 
-def print_network_summary(net: Network):
-    """Print summary of loaded network."""
-    num_routers = len(net.routers)
-    num_links = sum(len(neighbors) for neighbors in net.graph.values()) // 2
-
-    print(f"=== Network Summary ===")
-    print(f"Routers: {num_routers}")
-    print(f"Links: {num_links}")
-    print(f"\n--- Routers ---")
-    for r in net.routers:
-        print(f"  {r}")
-    print(f"\n--- Links ---")
-    seen = set()
-    for u, neighbors in net.graph.items():
-        for v, cost in neighbors:
-            if (v, u) not in seen:
-                print(f"  {u} <-> {v}: {cost} ms")
-                seen.add((u, v))
-
-
-# Example usage
 if __name__ == "__main__":
-    # Load ATT network
-    net = load_graphml("AttMpls.graphml")
+    from utils import print_network_summary, print_routing_table
+
+    net = load_graphml("data/AttMpls.graphml.xml")
     print_network_summary(net)
 
     print("\n=== Computing Forwarding Tables ===")
     net.compute_all_forwarding_tables()
 
-    # Print one router's table as example
-    sample_router = list(net.routers.keys())[0]
-    print(f"\nForwarding table for {sample_router}:")
-    for dest, nh in net.routers[sample_router].forward_table.items():
-        print(f"  → {dest}: next hop = {nh}")
+    # Print full path routing table for first router
+    first_router = list(net.routers.keys())[0]
+    print_routing_table(net, first_router, show_full_path=True)
