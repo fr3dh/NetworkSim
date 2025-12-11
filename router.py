@@ -1,13 +1,17 @@
 from dijkstra import dijkstra
 
 class Router:
-    def __init__(self, router_id, network):
+    def __init__(self, router_id, network, label=None, latitude=None, longitude=None):
         self.id = router_id
+        self.label = label
+        self.latitude = latitude
+        self.longitude = longitude
+        
         self.network = network
         
-        self.dist = {} # Dijkstra result
-        self.parent = {} # Parent pointers
-        self.forward_table = {} # dest → next-hop router
+        self.dist = {}
+        self.parent = {}
+        self.forward_table = {}
 
     def run_dijkstra(self):
         graph = self.network.graph

@@ -6,9 +6,15 @@ class Network:
         self.graph = defaultdict(list) # adjacency list
         self.routers = {} # id → Router
 
-    def add_router(self, router_id):
+    def add_router(self, router_id, label=None, latitude=None, longitude=None):
         if router_id not in self.routers:
-            self.routers[router_id] = Router(router_id, self)
+            self.routers[router_id] = Router(
+                router_id,
+                network=self,
+                label=label,
+                latitude=latitude,
+                longitude=longitude
+            )
 
     def add_link(self, u, v, cost):
         self.graph[u].append((v, cost))
