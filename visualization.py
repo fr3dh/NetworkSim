@@ -45,7 +45,7 @@ def visualize_spt(net, source, figsize=(14, 10)):
         edge_color="#bbbbbb",
         width=1,
         alpha=0.8,
-        connectionstyle="arc3,rad=0.12"
+        #connectionstyle="arc3,rad=0.12"
     )
 
     # SPT edges
@@ -54,7 +54,7 @@ def visualize_spt(net, source, figsize=(14, 10)):
         edgelist=spt_edges,
         width=3,
         edge_color="red",
-        connectionstyle="arc3,rad=0.25"
+        #connectionstyle="arc3,rad=0.25"
     )
 
     # Edge labels (safe version, no custom key mapping)

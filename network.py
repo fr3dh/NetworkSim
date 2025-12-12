@@ -15,6 +15,7 @@ class Network:
                 latitude=latitude,
                 longitude=longitude
             )
+        self.graph[router_id]  # 确保即使孤立点也在 graph 里
 
     def add_link(self, u, v, cost):
         self.graph[u].append((v, cost))

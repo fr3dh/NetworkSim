@@ -1,11 +1,6 @@
-"""
-NetworkSim - Utility Functions
-Printing, visualization, and helper functions.
-"""
-
-
+# Print summary of loaded network.
 def print_network_summary(net):
-    """Print summary of loaded network."""
+
     num_routers = len(net.routers)
     num_links = sum(len(neighbors) for neighbors in net.graph.values()) // 2
 
@@ -26,8 +21,8 @@ def print_network_summary(net):
                 seen.add((u, v))
 
 
+# Print routing table for a specific router.
 def print_routing_table(net, router_id, show_full_path=True):
-    """Print routing table for a specific router."""
     router = net.routers[router_id]
     print(f"\nRouting table for {router.id} ({router.label}):")
 
@@ -51,8 +46,7 @@ def print_routing_table(net, router_id, show_full_path=True):
             nh_label = net.routers[nh].label if nh else "None"
             print(f"  -> {dest} ({dest_label}): next hop = {nh} ({nh_label})")
 
-
+# Print routing tables for all routers.
 def print_all_routing_tables(net, show_full_path=False):
-    """Print routing tables for all routers."""
     for router_id in net.routers:
         print_routing_table(net, router_id, show_full_path)

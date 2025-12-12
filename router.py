@@ -26,9 +26,8 @@ class Router:
 
     def _next_hop_to(self, dest):
         """Trace parent pointers backwards to find next hop."""
-        if self.parent[dest] is None:
-            return None  # unreachable
-        
+        if self.parent.get(dest) is None:
+            return None  # unreachable or not in parent
         current = dest
         while self.parent[current] != self.id:
             current = self.parent[current]

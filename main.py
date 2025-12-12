@@ -6,11 +6,6 @@ from map_loader import load_graphml
 from visualization import visualize_spt
 
 def resolve_router_argument(net, arg):
-    """
-    Allow user to pass either:
-    - router ID (int)
-    - router label (string like "NY54", "CHCG")
-    """
     # If numeric ID provided
     if arg.isdigit():
         rid = int(arg)
