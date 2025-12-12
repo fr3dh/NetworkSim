@@ -1,14 +1,6 @@
 import heapq
 
 def dijkstra(graph, source):
-    """
-    graph: dict of {node: [(neighbor, weight), ...]}
-    source: starting node
-    
-    returns:
-        dist: shortest distances from source
-        parent: parent pointers for path reconstruction
-    """
     dist = {node: float('inf') for node in graph}
     parent = {node: None for node in graph}
     dist[source] = 0
