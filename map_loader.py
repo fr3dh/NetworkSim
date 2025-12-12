@@ -2,7 +2,6 @@ import xml.etree.ElementTree as ET
 import math
 from network import Network
 
-
 def calculate_distance(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
     """
     Calculate the Haversine distance in kilometers between two points on Earth.
